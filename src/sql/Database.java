@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class Banco {
+public class Database {
 
     private Connection con = null;
     //public boolean conectado = false;
@@ -19,18 +19,18 @@ public class Banco {
     private String USER = "";
     private String PASS = "";
 
-    public Banco(String DRIVERC, String URLC, String USERC, String PASSC) {
+    public Database(String DRIVERC, String URLC, String USERC, String PASSC) {
         setConfigVariables(DRIVERC, URLC, USERC, PASSC);
         close();
     }
     
-    public Banco(String configFilePath){
+    public Database(String configFilePath){
         getConfig(new File(configFilePath));
         setConfigVariables(DRIVER, URL, USER, PASS);
         close();
     }
 
-    public Banco(File configFile) {        
+    public Database(File configFile) {        
         getConfig(configFile);
         setConfigVariables(DRIVER, URL, USER, PASS);
         close();
@@ -39,7 +39,7 @@ public class Banco {
     public boolean testConnection() {
         boolean b = false;
         try {
-            b = !Conexao.getConnection(DRIVER, URL, USER, PASS).isClosed();
+            b = !DatabaseConnection.getConnection(DRIVER, URL, USER, PASS).isClosed();
         } catch (Exception e) {
         }
 
@@ -56,7 +56,7 @@ public class Banco {
     public void close() {
         try {
             //query("");
-            Conexao.closeConnection(con);
+            DatabaseConnection.closeConnection(con);
             con.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -71,7 +71,7 @@ public class Banco {
         PASS = PASSC;
 
         try {
-            con = Conexao.getConnection(DRIVER, URL, USER, PASS);
+            con = DatabaseConnection.getConnection(DRIVER, URL, USER, PASS);
             if (con == null) {
                 System.out.println("Conexao inválida para:");
                 System.out.println("DRIVER: " + DRIVER);
@@ -159,7 +159,7 @@ public class Banco {
             } catch (StackOverflowError e) {
 
             } finally {
-                Conexao.closeConnection(con, stmt);
+                DatabaseConnection.closeConnection(con, stmt);
             }
             close();
         }
@@ -189,7 +189,7 @@ public class Banco {
                 System.out.println("Erro no select do banco: " + ex);
                 System.out.println("O comando SQL usado foi: " + sql);
             } finally {
-                Conexao.closeConnection(con, stmt);
+                DatabaseConnection.closeConnection(con, stmt);
                 //conectado = false;
             }
         }

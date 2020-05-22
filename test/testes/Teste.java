@@ -1,7 +1,7 @@
 package testes;
 
 import java.util.ArrayList;
-import sql.Banco;
+import sql.Database;
 import sql.SQL;
 
 public class Teste {
@@ -22,7 +22,7 @@ public class Teste {
         add
         ad
         ad*/
-        Banco db = new Banco(localArquivo);
+        Database db = new Database(localArquivo);
 
         ArrayList<String[]> membros;
         membros = db.select("Select * from membros");

@@ -8,7 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 
-public class Conexao {
+public class DatabaseConnection {
     public static Connection getConnection(String DRIVER,String URL, String USER, String PASS){
         try {
             try{
