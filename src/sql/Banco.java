@@ -1,12 +1,13 @@
 package sql;
 
+import fileManager.FileManager;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.concurrent.Executor;
-import main.Arquivo;
+import java.util.Map;
 
 public class Banco {
 
@@ -19,22 +20,19 @@ public class Banco {
     private String PASS = "";
 
     public Banco(String DRIVERC, String URLC, String USERC, String PASSC) {
-        constructor(DRIVERC, URLC, USERC, PASSC);
+        setConfigVariables(DRIVERC, URLC, USERC, PASSC);
+        close();
+    }
+    
+    public Banco(String configFilePath){
+        getConfig(new File(configFilePath));
+        setConfigVariables(DRIVER, URL, USER, PASS);
         close();
     }
 
-    public Banco(String localArquivo) {
-        try {
-            String[] cfg = getCfg(localArquivo);
-            DRIVER = cfg[0];
-            URL = cfg[1];
-            USER = cfg[2];
-            PASS = cfg[3];
-
-        } catch (ArrayIndexOutOfBoundsException ex) {
-        }
-
-        constructor(DRIVER, URL, USER, PASS);
+    public Banco(File configFile) {        
+        getConfig(configFile);
+        setConfigVariables(DRIVER, URL, USER, PASS);
         close();
     }
 
@@ -52,7 +50,7 @@ public class Banco {
 
     private void reConnect() {
         close();
-        constructor(DRIVER, URL, USER, PASS);
+        setConfigVariables(DRIVER, URL, USER, PASS);
     }
 
     public void close() {
@@ -66,7 +64,7 @@ public class Banco {
         }
     }
 
-    private void constructor(String DRIVERC, String URLC, String USERC, String PASSC) {
+    private void setConfigVariables(String DRIVERC, String URLC, String USERC, String PASSC) {
         DRIVER = DRIVERC;
         URL = URLC;
         USER = USERC;
@@ -92,9 +90,17 @@ public class Banco {
         }
     }
 
-    private String[] getCfg(String localArquivo) {
-        String txt = Arquivo.ler(localArquivo);
+    private String[] getConfig(File configFile) {
+        String txt = FileManager.getText(configFile);
         String[] cfg = txt.split(";");
+        
+        try {
+            DRIVER = cfg[0];
+            URL = cfg[1];
+            USER = cfg[2];
+            PASS = cfg[3];
+        } catch (ArrayIndexOutOfBoundsException ex) {
+        }
 
         return cfg;
     }
@@ -115,6 +121,25 @@ public class Banco {
             close();
             return counts;
         }
+    }
+
+    public boolean query(File sqlFile){
+        return query(sqlFile, null);
+    }
+
+    public boolean query(File sqlFile, Map<String,String> variableChanges){
+        String text = FileManager.getText(sqlFile);
+        
+        if(variableChanges != null){
+            for (Map.Entry<String, String> variableChange : variableChanges.entrySet()) {
+                String variable = variableChange.getKey();
+                String value = variableChange.getValue();
+
+                text = text.replaceAll(":" + variable, value);
+            }
+        }
+        
+        return query(text);
     }
 
     public boolean query(String sql) {
