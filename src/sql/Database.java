@@ -173,7 +173,7 @@ public class Database {
         return b;
     }
 
-    public String replaceVariableChanges(String sqlScript, Map<String, String> variableChanges) {
+    private String replaceVariableChanges(String sqlScript, Map<String, String> variableChanges) {
         if (variableChanges != null) {
             for (Map.Entry<String, String> variableChange : variableChanges.entrySet()) {
                 String variable = variableChange.getKey();
