@@ -128,33 +128,29 @@ public class Database {
     }
 
     public boolean query(File sqlFile, Map<String,String> variableChanges){
-        String text = FileManager.getText(sqlFile);
-        
-        if(variableChanges != null){
-            for (Map.Entry<String, String> variableChange : variableChanges.entrySet()) {
-                String variable = variableChange.getKey();
-                String value = variableChange.getValue();
-
-                text = text.replaceAll(":" + variable, value);
-            }
-        }
-        
+        String text = FileManager.getText(sqlFile);        
+        text = replaceVariableChanges(text, variableChanges);     
         return query(text);
     }
+    
+    public boolean query(String sqlScript, Map<String,String> variableChanges){     
+        sqlScript = replaceVariableChanges(sqlScript, variableChanges);     
+        return query(sqlScript);
+    }
 
-    public boolean query(String sql) {
+    public boolean query(String sqlScript) {
         boolean b = false;
-        if (!sql.equals("")) {
+        if (!sqlScript.equals("")) {
             reConnect();
             PreparedStatement stmt = null;
 
             try {
-                stmt = con.prepareStatement(sql);
+                stmt = con.prepareStatement(sqlScript);
                 stmt.executeUpdate();
                 b = true;
             } catch (SQLException ex) {
-                if (!sql.equals("")) {
-                    System.out.println("SQL: '" + sql + "'\nErro: " + ex);
+                if (!sqlScript.equals("")) {
+                    System.out.println("SQL: '" + sqlScript + "'\nErro: " + ex);
                 }
             } catch (StackOverflowError e) {
 
@@ -165,6 +161,19 @@ public class Database {
         }
         
         return b;
+    }
+    
+    public String replaceVariableChanges(String sqlScript, Map<String,String> variableChanges){        
+        if(variableChanges != null){
+            for (Map.Entry<String, String> variableChange : variableChanges.entrySet()) {
+                String variable = variableChange.getKey();
+                String value = variableChange.getValue();
+
+                sqlScript = sqlScript.replaceAll(":" + variable, value);
+            }
+        }
+        
+        return sqlScript;
     }
 
     public ArrayList<String[]> select(String sql) {
