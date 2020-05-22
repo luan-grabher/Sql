@@ -13,7 +13,7 @@ public class Database {
 
     private static Database database;
 
-    private static void setStaticObject(Database database) {
+    public static void setStaticObject(Database database) {
         Database.database = database;
     }
 
