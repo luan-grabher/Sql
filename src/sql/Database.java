@@ -10,6 +10,15 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class Database {
+    private static Database database;
+    
+    private static void setStaticObject(Database database){
+        Database.database = database;
+    }
+
+    public static Database getDatabase() {
+        return database;
+    }
 
     private Connection con = null;
     //public boolean conectado = false;
