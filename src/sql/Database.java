@@ -10,9 +10,10 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class Database {
+
     private static Database database;
-    
-    private static void setStaticObject(Database database){
+
+    private static void setStaticObject(Database database) {
         Database.database = database;
     }
 
@@ -32,14 +33,14 @@ public class Database {
         setConfigVariables(DRIVERC, URLC, USERC, PASSC);
         close();
     }
-    
-    public Database(String configFilePath){
+
+    public Database(String configFilePath) {
         getConfig(new File(configFilePath));
         setConfigVariables(DRIVER, URL, USER, PASS);
         close();
     }
 
-    public Database(File configFile) {        
+    public Database(File configFile) {
         getConfig(configFile);
         setConfigVariables(DRIVER, URL, USER, PASS);
         close();
@@ -53,7 +54,7 @@ public class Database {
         }
 
         close();
-        
+
         return b;
     }
 
@@ -102,7 +103,7 @@ public class Database {
     private String[] getConfig(File configFile) {
         String txt = FileManager.getText(configFile);
         String[] cfg = txt.split(";");
-        
+
         try {
             DRIVER = cfg[0];
             URL = cfg[1];
@@ -132,18 +133,18 @@ public class Database {
         }
     }
 
-    public boolean query(File sqlFile){
+    public boolean query(File sqlFile) {
         return query(sqlFile, null);
     }
 
-    public boolean query(File sqlFile, Map<String,String> variableChanges){
-        String text = FileManager.getText(sqlFile);        
-        text = replaceVariableChanges(text, variableChanges);     
+    public boolean query(File sqlFile, Map<String, String> variableChanges) {
+        String text = FileManager.getText(sqlFile);
+        text = replaceVariableChanges(text, variableChanges);
         return query(text);
     }
-    
-    public boolean query(String sqlScript, Map<String,String> variableChanges){     
-        sqlScript = replaceVariableChanges(sqlScript, variableChanges);     
+
+    public boolean query(String sqlScript, Map<String, String> variableChanges) {
+        sqlScript = replaceVariableChanges(sqlScript, variableChanges);
         return query(sqlScript);
     }
 
@@ -168,12 +169,12 @@ public class Database {
             }
             close();
         }
-        
+
         return b;
     }
-    
-    public String replaceVariableChanges(String sqlScript, Map<String,String> variableChanges){        
-        if(variableChanges != null){
+
+    public String replaceVariableChanges(String sqlScript, Map<String, String> variableChanges) {
+        if (variableChanges != null) {
             for (Map.Entry<String, String> variableChange : variableChanges.entrySet()) {
                 String variable = variableChange.getKey();
                 String value = variableChange.getValue();
@@ -181,8 +182,21 @@ public class Database {
                 sqlScript = sqlScript.replaceAll(":" + variable, value);
             }
         }
-        
+
         return sqlScript;
+    }
+
+    public ArrayList<String[]> select(File sqlFile) {
+        return select(FileManager.getText(sqlFile));
+    }
+
+    public ArrayList<String[]> select(File sqlFile, Map<String, String> variableChanges) {
+        return select(FileManager.getText(sqlFile), variableChanges);
+    }
+
+    public ArrayList<String[]> select(String sqlScript, Map<String, String> variableChanges) {
+        sqlScript = replaceVariableChanges(sqlScript, variableChanges);
+        return select(sqlScript);
     }
 
     public ArrayList<String[]> select(String sql) {
