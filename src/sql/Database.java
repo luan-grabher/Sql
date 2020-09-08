@@ -5,8 +5,11 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Database {
@@ -200,33 +203,89 @@ public class Database {
     }
 
     public ArrayList<String[]> select(String sql) {
+        ArrayList<String[]> result = new ArrayList<>();
+
+        try {
+            ResultSet rs = getResultSet(sql);
+
+            int columnCount = rs.getMetaData().getColumnCount();
+            while (rs.next()) {
+                String[] row = new String[columnCount];
+                for (int i = 0; i < columnCount; i++) {
+                    row[i] = rs.getString(i + 1);
+                }
+                result.add(row);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("ERRO[Database.select]: " + e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * Retorna o record set de uma pesquisa SQL (select)
+     *
+     * @param sql Script SQL com Select
+     * @param swaps Trocas de variáveis no script sql definidas por ":" na
+     * frente da troca no script
+     * @return Retorna o record Set do comando ou NULL em erro ou em branco
+     */
+    public ResultSet getResultSet(String sql, Map<String, String> swaps) {
+        sql = replaceVariableChanges(sql, swaps);
+
+        return getResultSet(sql);
+    }
+
+    /**
+     * Retorna o record set de uma pesquisa SQL (select)
+     *
+     * @param sql Script SQL com Select
+     * @return Retorna o record Set do comando ou NULL em erro ou em branco
+     */
+    public ResultSet getResultSet(String sql) {
+        ResultSet rs = null;
+
         reConnect();
         PreparedStatement stmt = null;
-        ArrayList<String[]> result = new ArrayList<>();
 
         if (!sql.equals("")) {
             try {
                 stmt = con.prepareStatement(sql);
-                ResultSet rs = stmt.executeQuery();
-                
-                int columnCount = rs.getMetaData().getColumnCount();
-                while (rs.next()) {
-                    String[] row = new String[columnCount];
-                    for (int i = 0; i < columnCount; i++) {
-                        row[i] = rs.getString(i + 1);
-                    }
-                    result.add(row);
-                }
+                rs = stmt.executeQuery();
             } catch (SQLException ex) {
                 System.out.println("Erro no select do banco: " + ex);
                 System.out.println("O comando SQL usado foi: " + sql);
+
+                return null;
             } finally {
                 DatabaseConnection.closeConnection(con, stmt);
-                //conectado = false;
             }
         }
         close();
-        return result;
+        return rs;
+    }
 
+    /**
+     * Convert the ResultSet to a List of Maps, where each Map represents a row
+     * with columnNames and columValues
+     *
+     * @param rs
+     * @return
+     * @throws SQLException
+     */
+    public List<Map<String, Object>> resultSetToList(ResultSet rs) throws SQLException {
+        ResultSetMetaData md = rs.getMetaData();
+        int columns = md.getColumnCount();
+        List<Map<String, Object>> rows = new ArrayList<>();
+        while (rs.next()) {
+            Map<String, Object> row = new HashMap<>();
+            for (int i = 1; i <= columns; ++i) {
+                row.put(md.getColumnName(i), rs.getObject(i));
+            }
+            rows.add(row);
+        }
+        return rows;
     }
 }
