@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Database {
 
@@ -225,7 +227,7 @@ public class Database {
     }
 
     /**
-     * Retorna o record set de uma pesquisa SQL (select)
+     * Retorna o record set de uma pesquisa SQL (select). TEM QUE FECHAR CONEXÃO DEPOIS
      *
      * @param sql Script SQL com Select
      * @param swaps Trocas de variáveis no script sql definidas por ":" na
@@ -239,7 +241,7 @@ public class Database {
     }
 
     /**
-     * Retorna o record set de uma pesquisa SQL (select)
+     * Retorna o record set de uma pesquisa SQL (select). TEM QUE FECHAR CONEXÃO DEPOIS
      *
      * @param sql Script SQL com Select
      * @return Retorna o record Set do comando ou NULL em erro ou em branco
@@ -263,7 +265,7 @@ public class Database {
                 DatabaseConnection.closeConnection(con, stmt);
             }
         }
-        close();
+        //close();
         return rs;
     }
 
@@ -287,5 +289,29 @@ public class Database {
             rows.add(row);
         }
         return rows;
+    }
+    
+    /**
+     * Pega uma lista de mapas com as colunas nomeadas
+     * @param sql Script SQL com código Select
+     * @param swaps mapa com trocas que devem ser feitas no SQL script. Caso não tenha trocas, pode deixar null.
+     * @return Retorna lista de mapas com as colunas nomeadas
+     */
+    public List<Map<String, Object>> getMap(String sql, Map<String, String> swaps){
+        if(swaps != null){
+            sql = replaceVariableChanges(sql, swaps);
+        }
+        
+        ResultSet rs = getResultSet(sql);
+        
+        try {
+            List<Map<String, Object>> list = resultSetToList(rs);
+            close();
+            return list;
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            close();
+            return null;
+        }
     }
 }
