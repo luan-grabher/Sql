@@ -221,6 +221,8 @@ public class Database {
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("ERRO[Database.select]: " + e.getMessage());
+        } finally{
+            close();
         }
 
         return result;
@@ -250,19 +252,15 @@ public class Database {
         ResultSet rs = null;
 
         reConnect();
-        PreparedStatement stmt = null;
 
         if (!sql.equals("")) {
             try {
-                stmt = con.prepareStatement(sql);
+                PreparedStatement stmt = con.prepareStatement(sql);
                 rs = stmt.executeQuery();
             } catch (SQLException ex) {
                 System.out.println("Erro no select do banco: " + ex);
                 System.out.println("O comando SQL usado foi: " + sql);
-
                 return null;
-            } finally {
-                DatabaseConnection.closeConnection(con, stmt);
             }
         }
         //close();
@@ -284,7 +282,7 @@ public class Database {
         while (rs.next()) {
             Map<String, Object> row = new HashMap<>();
             for (int i = 1; i <= columns; ++i) {
-                row.put(md.getColumnName(i), rs.getObject(i));
+                row.put(md.getColumnLabel(i), rs.getObject(i));
             }
             rows.add(row);
         }
