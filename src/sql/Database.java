@@ -356,28 +356,24 @@ public class Database {
     }
 
     /**
-     * Pega uma lista de mapas com as colunas nomeadas
+     * Pega uma lista de mapas com as colunas nomeadas. CAUSA ERRO
      *
      * @param sql Script SQL com código Select
      * @param swaps mapa com trocas que devem ser feitas no SQL script. Caso não
      * tenha trocas, pode deixar null.
-     * @return Retorna lista de mapas com as colunas nomeadas
+     * @return Retorna lista de mapas com as colunas nomeadas ou causa erro.
      */
     public List<Map<String, Object>> getMap(String sql, Map<String, String> swaps) {
-        if (swaps != null) {
-            sql = replaceVariableChanges(sql, swaps);
-        }
+        if (swaps != null) sql = replaceVariableChanges(sql, swaps);
 
-        ResultSet rs = getResultSet(sql);
+        ResultSet rs = getResultSet(sql); //Pega o result set
 
         try {
             List<Map<String, Object>> list = resultSetToList(rs);
             close();
             return list;
         } catch (SQLException ex) {
-            ex.printStackTrace();
-            close();
-            return null;
+            throw new Error(ex);
         }
     }
 
