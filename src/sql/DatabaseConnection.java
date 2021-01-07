@@ -1,69 +1,76 @@
-
 package sql;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-
 public class DatabaseConnection {
-    public static Connection getConnection(String DRIVER,String URL, String USER, String PASS){
+
+    public static Connection getConnection(String DRIVER, String URL, String USER, String PASS) {
         try {
-            try{
+            try {
                 Class.forName(DRIVER);
+            } catch (ClassNotFoundException e) {
+                throw new SQLException("Classe do driver SQL não encontrada!");
             }
-            catch (ClassNotFoundException e)
-            {
-                System.err.println("Cannot load driver...");
-                e.printStackTrace();
-                return null;
-            }
-            
+
             Connection conn = DriverManager.getConnection(URL, USER, PASS);
             return conn;
         } catch (SQLException ex) {
-            System.out.println("ERRO NA CLASSE (CONEXAO): " + ex);
-            System.out.println("Conexao inválida para:");
-            System.out.println("DRIVER: " + DRIVER);
-            System.out.println("URL: " + URL);
-            System.out.println("USUÁRIO: " + USER);
-            System.out.println("SENHA: " + PASS + "\n");
-            return null;
+            StringBuilder sb = new StringBuilder("Conexao inválida para:\n");
+            sb.append("DRIVER: ").append(DRIVER).append("\n");
+            sb.append("URL: ").append(URL).append("\n");
+            sb.append("USUÁRIO: ").append(USER).append("\n");
+            sb.append("SENHA: ").append(PASS).append("\n\n");
+            sb.append("SENHA: ").append(PASS).append("\n\n");
+            sb.append("Erro Java: ").append(getStackTrace(ex));
+            
+            throw new Error(sb.toString());
         }
     }
-    
-    
-    public static void closeConnection(Connection con){
-       if (con != null){
-           try {
-               con.close();
-               con = null;
-           } catch (SQLException ex) {
-               System.out.println("Erro: " + ex);
-           }
-       } 
-    }
-    public static void closeConnection(Connection con, PreparedStatement stmt){
-       if (stmt != null){
-           try {
-               stmt.close();
-           } catch (SQLException ex) {
-               System.out.println("Erro: " + ex);
-           }
-       }
-       
-        closeConnection(con);
-    }
-    public static void closeConnection(Connection con, PreparedStatement stmt, ResultSet rs){
-        if (rs != null){
+
+    public static void closeConnection(Connection con) {
+        if (con != null) {
             try {
-               rs.close();
+                con.close();
+                con = null;
             } catch (SQLException ex) {
-               System.out.println("Erro: " + ex);
+                throw new Error("Erro ao fechar conexão : " + getStackTrace(ex));
             }
         }
-        closeConnection(con,stmt);
+    }
+
+    public static void closeConnection(Connection con, PreparedStatement stmt) {
+        if (stmt != null) {
+            try {
+                stmt.close();
+            } catch (SQLException ex) {
+                throw new Error("Erro ao fechar conexão com stm: " + getStackTrace(ex));
+            }
+        }
+        closeConnection(con);
+    }
+
+    public static void closeConnection(Connection con, PreparedStatement stmt, ResultSet rs) {
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException ex) {
+                throw new Error("Erro ao fechar conexão com stm e rs: " + getStackTrace(ex));
+            }
+        }
+        closeConnection(con, stmt);
+    }
+
+    public static String getStackTrace(SQLException e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+
+        return sw.toString();
     }
 }

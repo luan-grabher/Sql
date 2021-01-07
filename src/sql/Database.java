@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Database {
 
@@ -63,9 +61,16 @@ public class Database {
         return b;
     }
 
-    private void reConnect() {
-        close();
-        setConfigVariables(DRIVER, URL, USER, PASS);
+    private void reConnect(){
+        try{
+            close();
+            setConfigVariables(DRIVER, URL, USER, PASS);
+            if(con == null || con.isClosed()){
+                throw new Exception("");
+            }
+        }catch(Exception e){
+            
+        }
     }
 
     public void close() {
@@ -97,7 +102,7 @@ public class Database {
         } catch (Exception e) {
             System.out.println("Ocorreu um erro ao conectar ao banco na classe BANCO: " + e);
             e.printStackTrace();
-            System.out.println("Ab conexao usada foi:");
+            System.out.println("A conexao usada foi:");
             System.out.println("DRIVER: " + DRIVER);
             System.out.println("URL: " + URL);
             System.out.println("USUÁRIO: " + USER);
@@ -125,7 +130,7 @@ public class Database {
 
         try {
             for (String batch : batchs) {
-                if (batch.replaceAll(" ", "") != "") {
+                if (!"".equals(batch.replaceAll(" ", ""))) {
                     if (query(batch)) {
                         counts++;
                     }
