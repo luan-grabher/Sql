@@ -10,7 +10,7 @@ import java.sql.SQLException;
 
 public class DatabaseConnection {
 
-    public static Connection getConnection(String DRIVER, String URL, String USER, String PASS) {
+    public static Connection getConnection(String DRIVER, String URL, String USER, String PASS) throws SQLException {
         try {
             try {
                 Class.forName(DRIVER);
@@ -29,38 +29,38 @@ public class DatabaseConnection {
             sb.append("SENHA: ").append(PASS).append("\n\n");
             sb.append("Erro Java: ").append(getStackTrace(ex));
             
-            throw new Error(sb.toString());
+            throw new SQLException(sb.toString());
         }
     }
 
-    public static void closeConnection(Connection con) {
+    public static void closeConnection(Connection con) throws SQLException {
         if (con != null) {
             try {
                 con.close();
                 con = null;
             } catch (SQLException ex) {
-                throw new Error("Erro ao fechar conexão : " + getStackTrace(ex));
+                throw new SQLException("Erro ao fechar conexão : " + getStackTrace(ex));
             }
         }
     }
 
-    public static void closeConnection(Connection con, PreparedStatement stmt) {
+    public static void closeConnection(Connection con, PreparedStatement stmt) throws SQLException {
         if (stmt != null) {
             try {
                 stmt.close();
             } catch (SQLException ex) {
-                throw new Error("Erro ao fechar conexão com stm: " + getStackTrace(ex));
+                throw new SQLException("Erro ao fechar conexão com stm: " + getStackTrace(ex));
             }
         }
         closeConnection(con);
     }
 
-    public static void closeConnection(Connection con, PreparedStatement stmt, ResultSet rs) {
+    public static void closeConnection(Connection con, PreparedStatement stmt, ResultSet rs) throws SQLException {
         if (rs != null) {
             try {
                 rs.close();
             } catch (SQLException ex) {
-                throw new Error("Erro ao fechar conexão com stm e rs: " + getStackTrace(ex));
+                throw new SQLException("Erro ao fechar conexão com stm e rs: " + getStackTrace(ex));
             }
         }
         closeConnection(con, stmt);

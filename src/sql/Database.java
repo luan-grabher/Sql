@@ -2,6 +2,8 @@ package sql;
 
 import fileManager.FileManager;
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,6 +16,7 @@ import java.util.Map;
 
 public class Database {
 
+    //STATIC
     private static Database database;
 
     public static void setStaticObject(Database database) {
@@ -24,8 +27,8 @@ public class Database {
         return database;
     }
 
+    //MODEL
     private Connection con = null;
-    //public boolean conectado = false;
 
     private String DRIVER = "";
     private String URL = "";
@@ -33,49 +36,59 @@ public class Database {
     private String PASS = "";
 
     public Database(String DRIVERC, String URLC, String USERC, String PASSC) {
-        setConfigVariables(DRIVERC, URLC, USERC, PASSC);
+        DRIVER = DRIVERC;
+        URL = URLC;
+        USER = USERC;
+        PASS = PASSC;
+        setConnection();
         close();
     }
 
     public Database(String configFilePath) {
         getConfig(new File(configFilePath));
-        setConfigVariables(DRIVER, URL, USER, PASS);
+        setConnection();
         close();
     }
 
     public Database(File configFile) {
         getConfig(configFile);
-        setConfigVariables(DRIVER, URL, USER, PASS);
+        setConnection();
         close();
     }
 
+    /**
+     * Tenta setar a conexão. 
+     * @return se esta conectando no banco de dados sem erro.
+     */
     public boolean testConnection() {
-        boolean b = false;
         try {
-            b = !DatabaseConnection.getConnection(DRIVER, URL, USER, PASS).isClosed();
-        } catch (Exception e) {
+            setConnection(); //Define a conexão, vai gerar erro se não conseguir            
+        } catch (Error e) {
+            e.printStackTrace();
+            return false;
+        }finally{
+            close();
         }
-
-        close();
-
-        return b;
+        return true;
     }
 
-    private void reConnect(){
-        try{
+    /**
+     * Fecha a conexão se estiver aberta e seta novamente
+     */
+    private void reConnect() {
+        try {
             close();
-            setConfigVariables(DRIVER, URL, USER, PASS);
-            if(con == null || con.isClosed()){
-                throw new Exception("");
+            setConnection();
+            if (con == null || con.isClosed()) {
+                throw new Exception("Erro ao tentar");
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             
         }
     }
 
     public void close() {
         try {
-            //query("");
             DatabaseConnection.closeConnection(con);
             con.close();
         } catch (Exception e) {
@@ -84,29 +97,23 @@ public class Database {
         }
     }
 
-    private void setConfigVariables(String DRIVERC, String URLC, String USERC, String PASSC) {
-        DRIVER = DRIVERC;
-        URL = URLC;
-        USER = USERC;
-        PASS = PASSC;
-
+    /**
+     * Define a veriavel de conexão com as configurações atuais. Causa um erro
+     * caso não conecte.
+     */
+    private void setConnection() {
         try {
             con = DatabaseConnection.getConnection(DRIVER, URL, USER, PASS);
-            if (con == null) {
-                System.out.println("Conexao inválida para:");
-                System.out.println("DRIVER: " + DRIVER);
-                System.out.println("URL: " + URL);
-                System.out.println("USUÁRIO: " + USER);
-                System.out.println("SENHA: " + PASS + "\n");
+            if(con.isClosed()){ //Se conexão estiver fechada
+                throw new SQLException("A conexão está fechada!");
             }
-        } catch (Exception e) {
-            System.out.println("Ocorreu um erro ao conectar ao banco na classe BANCO: " + e);
-            e.printStackTrace();
-            System.out.println("A conexao usada foi:");
-            System.out.println("DRIVER: " + DRIVER);
-            System.out.println("URL: " + URL);
-            System.out.println("USUÁRIO: " + USER);
-            System.out.println("SENHA: " + PASS + "\n");
+        } catch (SQLException e) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Erro ao conectar no banco de dados:\n");
+            sb.append(getConfigDescription()).append("\n\n");
+            sb.append(getStackTrace(e));
+
+            throw new Error(sb.toString());
         }
     }
 
@@ -226,7 +233,7 @@ public class Database {
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("ERRO[Database.select]: " + e.getMessage());
-        } finally{
+        } finally {
             close();
         }
 
@@ -234,7 +241,8 @@ public class Database {
     }
 
     /**
-     * Retorna o record set de uma pesquisa SQL (select). TEM QUE FECHAR CONEXÃO DEPOIS
+     * Retorna o record set de uma pesquisa SQL (select). TEM QUE FECHAR CONEXÃO
+     * DEPOIS
      *
      * @param sql Script SQL com Select
      * @param swaps Trocas de variáveis no script sql definidas por ":" na
@@ -248,7 +256,8 @@ public class Database {
     }
 
     /**
-     * Retorna o record set de uma pesquisa SQL (select). TEM QUE FECHAR CONEXÃO DEPOIS
+     * Retorna o record set de uma pesquisa SQL (select). TEM QUE FECHAR CONEXÃO
+     * DEPOIS
      *
      * @param sql Script SQL com Select
      * @return Retorna o record Set do comando ou NULL em erro ou em branco
@@ -258,7 +267,7 @@ public class Database {
 
         reConnect();
 
-        if (!sql.equals("")) {
+        if (!sql.equals("") && con != null) {
             try {
                 PreparedStatement stmt = con.prepareStatement(sql);
                 rs = stmt.executeQuery();
@@ -293,20 +302,22 @@ public class Database {
         }
         return rows;
     }
-    
+
     /**
      * Pega uma lista de mapas com as colunas nomeadas
+     *
      * @param sql Script SQL com código Select
-     * @param swaps mapa com trocas que devem ser feitas no SQL script. Caso não tenha trocas, pode deixar null.
+     * @param swaps mapa com trocas que devem ser feitas no SQL script. Caso não
+     * tenha trocas, pode deixar null.
      * @return Retorna lista de mapas com as colunas nomeadas
      */
-    public List<Map<String, Object>> getMap(String sql, Map<String, String> swaps){
-        if(swaps != null){
+    public List<Map<String, Object>> getMap(String sql, Map<String, String> swaps) {
+        if (swaps != null) {
             sql = replaceVariableChanges(sql, swaps);
         }
-        
+
         ResultSet rs = getResultSet(sql);
-        
+
         try {
             List<Map<String, Object>> list = resultSetToList(rs);
             close();
@@ -316,5 +327,34 @@ public class Database {
             close();
             return null;
         }
+    }
+
+    /**
+     * Retorna o stacktrace em forma de string
+     *
+     * @param e Erro SQL
+     * @return Retorna o stacktrace em forma de string
+     */
+    public static String getStackTrace(SQLException e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+
+        return sw.toString();
+    }
+
+    /**
+     * Retorna a configuração utilizada atual em STRING
+     *
+     * @return Retorna a configuração utilizada atual em STRING
+     */
+    public String getConfigDescription() {
+        StringBuilder sb = new StringBuilder("DRIVER: ");
+        sb.append(DRIVER).append("\n");
+        sb.append("URL: ").append(URL).append("\n");
+        sb.append("USUÁRIO: ").append(USER).append("\n");
+        sb.append("SENHA: ").append(PASS);
+
+        return sb.toString();
     }
 }
