@@ -231,40 +231,66 @@ public class Database {
         return sqlScript;
     }
 
+    /**
+     * Retorna uma lista de string das colunas de uma pesuqisa sql do arquivo
+     *
+     * @param sqlFile Arquivo com Código sql select
+     * @return Retorna uma lista de string das colunas de uma pesuqisa sql
+     */
     public ArrayList<String[]> select(File sqlFile) {
         return select(FileManager.getText(sqlFile));
     }
 
+    /**
+     * Retorna uma lista de string das colunas de uma pesuqisa sql do arquivo e
+     * substitui variaveis com o mapa de trocas
+     *
+     * @param sqlFile Arquivo com Código sql select
+     * @param variableChanges Mapa de trocas
+     * @return Retorna uma lista de string das colunas de uma pesuqisa sql
+     */
     public ArrayList<String[]> select(File sqlFile, Map<String, String> variableChanges) {
         return select(FileManager.getText(sqlFile), variableChanges);
     }
 
+    /**
+     * Retorna uma lista de string das colunas de uma pesuqisa sql do arquivo e
+     * substitui variaveis com o mapa de trocas
+     *
+     * @param sqlScript Código sql select
+     * @param variableChanges Mapa de trocas
+     * @return Retorna uma lista de string das colunas de uma pesuqisa sql
+     */
     public ArrayList<String[]> select(String sqlScript, Map<String, String> variableChanges) {
         sqlScript = replaceVariableChanges(sqlScript, variableChanges);
         return select(sqlScript);
     }
 
+    /**
+     * Retorna uma lista de string das colunas de uma pesuqisa sql
+     *
+     * @param sql Código sql select
+     * @return Retorna uma lista de string das colunas de uma pesuqisa sql
+     */
     public ArrayList<String[]> select(String sql) {
-        ArrayList<String[]> result = new ArrayList<>();
+        ArrayList<String[]> result = new ArrayList<>(); //Inicia resultado
 
         try {
-            ResultSet rs = getResultSet(sql);
+            ResultSet rs = getResultSet(sql); // Pega o result set do script
 
-            int columnCount = rs.getMetaData().getColumnCount();
-            while (rs.next()) {
-                String[] row = new String[columnCount];
-                for (int i = 0; i < columnCount; i++) {
-                    row[i] = rs.getString(i + 1);
+            int columnCount = rs.getMetaData().getColumnCount();//conta colunas
+            while (rs.next()) {//Enquanto tiver proximo pra ir, vai pro proximo
+                String[] row = new String[columnCount];//Cria array da linha
+                for (int i = 0; i < columnCount; i++) {//percorre colunas
+                    row[i] = rs.getString(i + 1);//define a coluna
                 }
-                result.add(row);
+                result.add(row);//adiciona linha na lista de linhas
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("ERRO[Database.select]: " + e.getMessage());
-        } finally {
-            close();
+        } catch (SQLException e) {
+            throw new Error(e);
         }
 
+        close();
         return result;
     }
 
@@ -279,56 +305,54 @@ public class Database {
      */
     public ResultSet getResultSet(String sql, Map<String, String> swaps) {
         sql = replaceVariableChanges(sql, swaps);
-
         return getResultSet(sql);
     }
 
     /**
      * Retorna o record set de uma pesquisa SQL (select). TEM QUE FECHAR CONEXÃO
-     * DEPOIS
+     * DEPOIS. Causa Erro se ocorrer algum erro
      *
      * @param sql Script SQL com Select
-     * @return Retorna o record Set do comando ou NULL em erro ou em branco
+     * @return Retorna o record Set do comando ou causa Erro
      */
     public ResultSet getResultSet(String sql) {
-        ResultSet rs = null;
-
-        reConnect();
+        reConnect(); //reconecta no banco
 
         if (!sql.equals("") && con != null) {
             try {
                 PreparedStatement stmt = con.prepareStatement(sql);
-                rs = stmt.executeQuery();
+                return stmt.executeQuery();
             } catch (SQLException ex) {
-                System.out.println("Erro no select do banco: " + ex);
-                System.out.println("O comando SQL usado foi: " + sql);
-                return null;
+                StringBuilder sb = new StringBuilder();
+                sb.append("Erro no select com o script:").append(sql).append("\n");
+                sb.append(getStackTrace(ex));
+                throw new Error(sb.toString());
             }
+        } else {
+            throw new Error("O código SQL está em branco ou a conexão está inválida");
         }
-        //close();
-        return rs;
     }
 
     /**
-     * Convert the ResultSet to a List of Maps, where each Map represents a row
-     * with columnNames and columValues
+     * Converte o ResultSet para uma Lista de Mapas, cada Mapa represeta uma
+     * linha com colunas
      *
-     * @param rs
-     * @return
+     * @param rs ResultSet da pesquisa
+     * @return Lista de Mapas, cada Mapa represeta uma linha com colunas
      * @throws SQLException
      */
     public List<Map<String, Object>> resultSetToList(ResultSet rs) throws SQLException {
-        ResultSetMetaData md = rs.getMetaData();
-        int columns = md.getColumnCount();
-        List<Map<String, Object>> rows = new ArrayList<>();
-        while (rs.next()) {
-            Map<String, Object> row = new HashMap<>();
-            for (int i = 1; i <= columns; ++i) {
-                row.put(md.getColumnLabel(i), rs.getObject(i));
+        ResultSetMetaData md = rs.getMetaData(); //Define metadata
+        int columns = md.getColumnCount(); //Pega numero de colunas
+        List<Map<String, Object>> rows = new ArrayList<>(); //Cria lista
+        while (rs.next()) {//Vai para a proxima linha
+            Map<String, Object> row = new HashMap<>(); //Cria mapa da linha
+            for (int i = 1; i <= columns; ++i) {//percorre todas colunas
+                row.put(md.getColumnLabel(i), rs.getObject(i)); //coloca coluna no mapa da linha
             }
-            rows.add(row);
+            rows.add(row); //adiciona a linha na lista de linhas
         }
-        return rows;
+        return rows; //retorna as linhas
     }
 
     /**
