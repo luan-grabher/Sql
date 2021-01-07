@@ -218,13 +218,13 @@ public class Database {
         }
     }
 
-    private String replaceVariableChanges(String sqlScript, Map<String, String> variableChanges) {
-        if (variableChanges != null) {
-            for (Map.Entry<String, String> variableChange : variableChanges.entrySet()) {
-                String variable = variableChange.getKey();
-                String value = variableChange.getValue();
-
-                sqlScript = sqlScript.replaceAll(":" + variable, value);
+    /**
+     * Substitui todas as variaveis do mapa dentro do script
+     */
+    private String replaceVariableChanges(String sqlScript, Map<String, String> swaps) {
+        if (swaps != null) {//Se o mapa nao for nulo
+            for (Map.Entry<String, String> swap : swaps.entrySet()) {
+                sqlScript = sqlScript.replaceAll(":" + swap.getKey(), swap.getValue());
             }
         }
 
