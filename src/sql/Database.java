@@ -45,19 +45,20 @@ public class Database {
     }
 
     public Database(String configFilePath) {
-        getConfig(new File(configFilePath));
+        setConfigByFile(new File(configFilePath));
         setConnection();
         close();
     }
 
     public Database(File configFile) {
-        getConfig(configFile);
+        setConfigByFile(configFile);
         setConnection();
         close();
     }
 
     /**
-     * Tenta setar a conexão. 
+     * Tenta setar a conexão.
+     *
      * @return se esta conectando no banco de dados sem erro.
      */
     public boolean testConnection() {
@@ -66,7 +67,7 @@ public class Database {
         } catch (Error e) {
             e.printStackTrace();
             return false;
-        }finally{
+        } finally {
             close();
         }
         return true;
@@ -76,24 +77,21 @@ public class Database {
      * Fecha a conexão se estiver aberta e seta novamente
      */
     private void reConnect() {
-        try {
-            close();
-            setConnection();
-            if (con == null || con.isClosed()) {
-                throw new Exception("Erro ao tentar");
-            }
-        } catch (Exception e) {
-            
-        }
+        close();
+        setConnection();
     }
 
+    /**
+     * Fecha conexão e se ocorrer algum erro, causa erro
+     */
     public void close() {
         try {
-            DatabaseConnection.closeConnection(con);
-            con.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("Erro ao fechar conexao: " + e);
+            if (con != null) {
+                DatabaseConnection.closeConnection(con);
+                con.close();
+            }
+        } catch (SQLException e) {
+            throw new Error(e);
         }
     }
 
@@ -104,7 +102,7 @@ public class Database {
     private void setConnection() {
         try {
             con = DatabaseConnection.getConnection(DRIVER, URL, USER, PASS);
-            if(con.isClosed()){ //Se conexão estiver fechada
+            if (con.isClosed()) { //Se conexão estiver fechada
                 throw new SQLException("A conexão está fechada!");
             }
         } catch (SQLException e) {
@@ -117,77 +115,107 @@ public class Database {
         }
     }
 
-    private String[] getConfig(File configFile) {
-        String txt = FileManager.getText(configFile);
-        String[] cfg = txt.split(";");
+    /**
+     * Define as variaveis de conexão com um arquivo de conexão. Se não tiver no
+     * padrão causa Error
+     */
+    private void setConfigByFile(File configFile) {
+        String[] cfg = FileManager.getText(configFile).split(";"); //Divide texto do arquivo
 
-        try {
+        if (cfg.length > 3) {
             DRIVER = cfg[0];
             URL = cfg[1];
             USER = cfg[2];
             PASS = cfg[3];
-        } catch (ArrayIndexOutOfBoundsException ex) {
+        } else {
+            throw new Error("Arquivo de configuração não está no padrão!");
         }
-
-        return cfg;
     }
 
+    /**
+     * Executa vários códigos SQL
+     *
+     * @param batchs Códigos SQL
+     * @return Retorna o número de códigos que foram executados com sucesso.
+     */
     public int executeBatchs(String[] batchs) {
         int counts = 0;
 
-        try {
-            for (String batch : batchs) {
-                if (!"".equals(batch.replaceAll(" ", ""))) {
-                    if (query(batch)) {
-                        counts++;
-                    }
+        //Não colocar try catch para o código travar caso der erro
+        for (String batch : batchs) {//Percorre tosdos codigos
+            if (!"".equals(batch.replaceAll(" ", ""))) { //Se o codigo nao estiver em branco
+                if (query(batch)) {//Executa codigo
+                    counts++;//Se ficar Ok
                 }
             }
-        } catch (Exception e) {
-        } finally {
-            close();
-            return counts;
         }
+
+        close();
+        return counts;
     }
 
+    /**
+     * Executa o código do arquivo SQL e retorna true se não ocorrer erro no
+     * código.
+     *
+     * @param sqlFile Arquivo SQL com código
+     * @return retorna true se não ocorrer erro no código
+     */
     public boolean query(File sqlFile) {
         return query(sqlFile, null);
     }
 
+    /**
+     * Executa o código do arquivo SQL ,substitui as variaveis do mapa e retorna
+     * true se não ocorrer erro no código.
+     *
+     * @param sqlFile Arquivo SQL com código
+     * @param variableChanges Variaveis para substiuir dentro do código
+     * @return retorna true se não ocorrer erro no código
+     */
     public boolean query(File sqlFile, Map<String, String> variableChanges) {
         String text = FileManager.getText(sqlFile);
         text = replaceVariableChanges(text, variableChanges);
         return query(text);
     }
 
+    /**
+     * Executa o código SQL ,substitui as variaveis do mapa e retorna true se
+     * não ocorrer erro no código.
+     *
+     * @param sqlScript código SQL
+     * @param variableChanges Variaveis para substiuir dentro do código
+     * @return retorna true se não ocorrer erro no código
+     */
     public boolean query(String sqlScript, Map<String, String> variableChanges) {
         sqlScript = replaceVariableChanges(sqlScript, variableChanges);
         return query(sqlScript);
     }
 
+    /**
+     * Executa o código SQL e retorna true se não ocorrer erro no código.
+     *
+     * @param sqlScript Código SQL para executar
+     * @return retorna true se não ocorrer erro no código
+     */
     public boolean query(String sqlScript) {
-        boolean b = false;
-        if (!sqlScript.equals("")) {
+        if (!sqlScript.equals("")) { //Se o código não estiver vazio
             reConnect();
-            PreparedStatement stmt = null;
 
             try {
-                stmt = con.prepareStatement(sqlScript);
-                stmt.executeUpdate();
-                b = true;
+                PreparedStatement stmt = con.prepareStatement(sqlScript);
+                stmt.executeUpdate();//Executa codigo
+                DatabaseConnection.closeConnection(con, stmt);//fecha stmt
+                close();//fecha conexao
+                return true;
             } catch (SQLException ex) {
-                if (!sqlScript.equals("")) {
-                    System.out.println("SQL: '" + sqlScript + "'\nErro: " + ex);
-                }
-            } catch (StackOverflowError e) {
-
-            } finally {
-                DatabaseConnection.closeConnection(con, stmt);
+                close();
+                System.out.println("SQL: '" + sqlScript + "'\nErro: " + getStackTrace(ex));
+                return false;
             }
-            close();
+        } else {
+            return false;
         }
-
-        return b;
     }
 
     private String replaceVariableChanges(String sqlScript, Map<String, String> variableChanges) {
