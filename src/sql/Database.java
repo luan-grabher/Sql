@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 
 public class Database {
 
@@ -226,9 +227,14 @@ public class Database {
      */
     private String replaceVariableChanges(String sqlScript, Map<String, String> swaps) {
         if (swaps != null) {//Se o mapa nao for nulo
-            for (Map.Entry<String, String> swap : swaps.entrySet()) {
-                sqlScript = sqlScript.replaceAll(":" + swap.getKey(), swap.getValue());
-            }
+            String[] newStr = new String[1];//Tem que usar array para acessar variavel dentro do foreach
+            newStr[0] = sqlScript;
+            
+            swaps.forEach((key,val) ->{
+                newStr[0] = newStr[0].replaceAll(":" + key, Matcher.quoteReplacement(val));//matcher para remover barras e cifroes
+            });
+            
+            sqlScript = newStr[0];
         }
 
         return sqlScript;
