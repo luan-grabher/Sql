@@ -133,7 +133,7 @@ public class Database {
     }
 
     /**
-     * Executa vários códigos SQL
+     * Executa vários códigos SQL. Continua executando se der erro em algum.
      *
      * @param batchs Códigos SQL
      * @return Retorna o número de códigos que foram executados com sucesso.
@@ -144,8 +144,11 @@ public class Database {
         //Não colocar try catch para o código travar caso der erro
         for (String batch : batchs) {//Percorre tosdos codigos
             if (!"".equals(batch.replaceAll(" ", ""))) { //Se o codigo nao estiver em branco
-                if (query(batch)) {//Executa codigo
-                    counts++;//Se ficar Ok
+                try {
+                    query(batch);
+                    counts++;
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -161,7 +164,7 @@ public class Database {
      * @param sqlFile Arquivo SQL com código
      * @return retorna true se não ocorrer erro no código
      */
-    public boolean query(File sqlFile) {
+    public boolean query(File sqlFile) throws SQLException {
         return query(sqlFile, null);
     }
 
@@ -173,7 +176,7 @@ public class Database {
      * @param variableChanges Variaveis para substiuir dentro do código
      * @return retorna true se não ocorrer erro no código
      */
-    public boolean query(File sqlFile, Map<String, String> variableChanges) {
+    public boolean query(File sqlFile, Map<String, String> variableChanges) throws SQLException {
         String text = FileManager.getText(sqlFile);
         text = replaceVariableChanges(text, variableChanges);
         return query(text);
@@ -187,7 +190,7 @@ public class Database {
      * @param variableChanges Variaveis para substiuir dentro do código
      * @return retorna true se não ocorrer erro no código
      */
-    public boolean query(String sqlScript, Map<String, String> variableChanges) {
+    public boolean query(String sqlScript, Map<String, String> variableChanges) throws SQLException {
         sqlScript = replaceVariableChanges(sqlScript, variableChanges);
         return query(sqlScript);
     }
@@ -197,8 +200,9 @@ public class Database {
      *
      * @param sqlScript Código SQL para executar
      * @return retorna true se não ocorrer erro no código
+     * @throws java.sql.SQLException Causa um erro caso algo ocorra errado
      */
-    public boolean query(String sqlScript) {
+    public boolean query(String sqlScript) throws SQLException {
         if (!sqlScript.equals("")) { //Se o código não estiver vazio
             reConnect();
 
@@ -210,11 +214,10 @@ public class Database {
                 return true;
             } catch (SQLException ex) {
                 close();
-                System.out.println("SQL: '" + sqlScript + "'\nErro: " + getStackTrace(ex));
-                return false;
+                throw new SQLException("SQL: '" + sqlScript + "'\nErro: " + getStackTrace(ex));
             }
         } else {
-            return false;
+            throw new SQLException("O código SQL não pode ficar em branco!");
         }
     }
 
