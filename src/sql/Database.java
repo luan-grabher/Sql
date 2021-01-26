@@ -236,6 +236,9 @@ public class Database {
             
             sqlScript = newStr[0];
         }
+        
+        //Tira o que nao teve replace
+        sqlScript = sqlScript.replaceAll("[:][a-zA-Z]+", "");
 
         return sqlScript;
     }
