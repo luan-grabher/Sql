@@ -1,6 +1,5 @@
 package sql.Entity;
 
-import Auxiliar.Valor;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -8,7 +7,7 @@ public class CampoSQL {
 
     private String nome;
     private String between;
-    private Valor valor;
+    private String valor;
     private boolean circundarValorComAspas;
     private boolean habilitarNulo;
 
@@ -27,7 +26,7 @@ public class CampoSQL {
     private void Construtor(String nome, String between, String valor, boolean circundarValorComAspas, boolean habilitarNulo) {
         this.nome = nome;
         this.between = between;
-        this.valor = new Valor(valor);
+        this.valor = valor;
         this.circundarValorComAspas = circundarValorComAspas;
         this.habilitarNulo = habilitarNulo;
     }
@@ -37,16 +36,21 @@ public class CampoSQL {
     }
 
     public String getValor() {
-        String retorno = valor.getString();
-        if (habilitarNulo && valor.getBigDecimal().compareTo(BigDecimal.ZERO) == 0) {
-            retorno = "null";
+        String r = valor;
+        
+        try {
+            if (habilitarNulo && new BigDecimal(r).compareTo(BigDecimal.ZERO) == 0) {
+                r = "null";
+            }
+        } catch (Exception e) {
+            //não faz nada pois não é um numero
         }
 
-        if (!retorno.equals("null") && circundarValorComAspas) {
-            retorno = "'" + retorno + "'";
+        if (!r.equals("null") && circundarValorComAspas) {
+            r = "'" + valor + "'";
         }
 
-        return retorno;
+        return r;
     }
 
     public String getBetween() {
