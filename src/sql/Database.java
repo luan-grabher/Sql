@@ -123,9 +123,11 @@ public class Database {
      */
     private void setConnection() {
         try {
-            con = DatabaseConnection.getConnection(DRIVER, URL, USER, PASS);
-            if (con.isClosed()) { //Se conexão estiver fechada
-                throw new SQLException("A conexão está fechada!");
+            if(!testConnection()){
+                con = DatabaseConnection.getConnection(DRIVER, URL, USER, PASS);
+                if (con.isClosed()) { //Se conexão estiver fechada
+                    throw new SQLException("A conexão está fechada!");
+                }
             }
         } catch (SQLException e) {
             StringBuilder sb = new StringBuilder();
