@@ -19,6 +19,7 @@ public class Database {
 
     //STATIC
     private static Database database;
+    private static Boolean autoClose = true;
 
     public static void setStaticObject(Database database) {
         Database.database = database;
@@ -27,6 +28,16 @@ public class Database {
     public static Database getDatabase() {
         return database;
     }
+
+    public static Boolean getAutoClose() {
+        return autoClose;
+    }
+
+    public static void setAutoClose(Boolean autoClose) {
+        Database.autoClose = autoClose;
+    }
+    
+    
 
     //MODEL
     private Connection con = null;
@@ -81,13 +92,23 @@ public class Database {
         close();
         setConnection();
     }
-
+    
     /**
-     * Fecha conexão e se ocorrer algum erro, causa erro
+     * Fecha conexão e se ocorrer algum erro, causa erro         
      */
     public void close() {
+        close(false);
+    }
+    
+
+    /**
+     * Fecha conexão e se ocorrer algum erro, causa erro    
+     * 
+     * @param forceClose Deve fechar mesmo que o autoClose esteja falso
+     */
+    public void close(Boolean forceClose) {
         try {
-            if (con != null) {
+            if (con != null && (autoClose || forceClose)) {
                 DatabaseConnection.closeConnection(con);
                 con.close();
             }
