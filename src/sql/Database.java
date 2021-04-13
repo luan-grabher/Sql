@@ -19,7 +19,7 @@ public class Database {
 
     //STATIC
     private static Database database;
-    private static Boolean autoClose = true;
+    private Boolean autoClose = true;
 
     public static void setStaticObject(Database database) {
         Database.database = database;
@@ -29,12 +29,12 @@ public class Database {
         return database;
     }
 
-    public static Boolean getAutoClose() {
-        return autoClose;
+    public Boolean getAutoClose() {
+        return this.autoClose;
     }
 
-    public static void setAutoClose(Boolean autoClose) {
-        Database.autoClose = autoClose;
+    public void setAutoClose(Boolean autoClose) {
+        this.autoClose = autoClose;
     }
     
     
