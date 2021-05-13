@@ -36,8 +36,6 @@ public class Database {
     public void setAutoClose(Boolean autoClose) {
         this.autoClose = autoClose;
     }
-    
-    
 
     //MODEL
     private Connection con = null;
@@ -92,18 +90,17 @@ public class Database {
         close();
         setConnection();
     }
-    
+
     /**
-     * Fecha conexão e se ocorrer algum erro, causa erro         
+     * Fecha conexão e se ocorrer algum erro, causa erro
      */
     public void close() {
         close(false);
     }
-    
 
     /**
-     * Fecha conexão e se ocorrer algum erro, causa erro    
-     * 
+     * Fecha conexão e se ocorrer algum erro, causa erro
+     *
      * @param forceClose Deve fechar mesmo que o autoClose esteja falso
      */
     public void close(Boolean forceClose) {
@@ -123,7 +120,7 @@ public class Database {
      */
     private void setConnection() {
         try {
-            if(con == null || con.isClosed()){
+            if (con == null || con.isClosed()) {
                 con = DatabaseConnection.getConnection(DRIVER, URL, USER, PASS);
                 if (con.isClosed()) { //Se conexão estiver fechada
                     throw new SQLException("A conexão está fechada!");
@@ -249,17 +246,25 @@ public class Database {
      * Substitui todas as variaveis do mapa dentro do script
      */
     private String replaceVariableChanges(String sqlScript, Map<String, String> swaps) {
-        if (swaps != null) {//Se o mapa nao for nulo
+        if (swaps != null && sqlScript != null && !sqlScript.equals("")) {//Se o mapa nao for nulo nem o script
             String[] newStr = new String[1];//Tem que usar array para acessar variavel dentro do foreach
             newStr[0] = sqlScript;
-            
-            swaps.forEach((key,val) ->{
-                newStr[0] = newStr[0].replaceAll(":" + key, Matcher.quoteReplacement(val));//matcher para remover barras e cifroes
+
+            swaps.forEach((key, val) -> {
+                //Só executa se o valor para replace não for null
+                if (val != null) {
+                    newStr[0] = newStr[0].replaceAll(":" + key, Matcher.quoteReplacement(val));//matcher para remover barras e cifroes
+                }
             });
-            
+
             sqlScript = newStr[0];
         }
-        
+
+        //Se for null deixa em branco
+        if (sqlScript == null) {
+            sqlScript = "";
+        }
+
         //Tira o que nao teve replace
         sqlScript = sqlScript.replaceAll("[:][a-zA-Z]+", "");
 
@@ -399,7 +404,9 @@ public class Database {
      * @return Retorna lista de mapas com as colunas nomeadas ou causa erro.
      */
     public List<Map<String, Object>> getMap(String sql, Map<String, String> swaps) {
-        if (swaps != null) sql = replaceVariableChanges(sql, swaps);
+        if (swaps != null) {
+            sql = replaceVariableChanges(sql, swaps);
+        }
 
         ResultSet rs = getResultSet(sql); //Pega o result set
 
