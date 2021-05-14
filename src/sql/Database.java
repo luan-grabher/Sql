@@ -358,7 +358,11 @@ public class Database {
     public ResultSet getResultSet(String sql) {
         reConnect(); //reconecta no banco
 
-        if (!sql.equals("") && con != null) {
+        if (sql.equals("")){
+            throw new Error("O código SQL está em branco.");
+        } else if(con != null) {
+            throw new Error("A conexão com o banco de dados está nula.");
+        }else{
             try {
                 PreparedStatement stmt = con.prepareStatement(sql);
                 return stmt.executeQuery();
@@ -368,8 +372,6 @@ public class Database {
                 sb.append(getStackTrace(ex));
                 throw new Error(sb.toString());
             }
-        } else {
-            throw new Error("O código SQL está em branco ou a conexão está inválida");
         }
     }
 
