@@ -360,7 +360,7 @@ public class Database {
 
         if (sql.equals("")){
             throw new Error("O código SQL está em branco.");
-        } else if(con != null) {
+        } else if(con == null) {
             throw new Error("A conexão com o banco de dados está nula.");
         }else{
             try {
