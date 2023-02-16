@@ -1,0 +1,8 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "e:\\Documents\\Projetos\\Moresco\\FileManager\\FileManager.jar",
+        "e:\\Documents\\Projetos\\Moresco\\Jar-Vendors\\JayBird.jar",
+        "e:\\Documents\\Projetos\\Moresco\\Jar-Vendors\\mysql-connector-java-8.0.13.jar"
+    ]
+}
